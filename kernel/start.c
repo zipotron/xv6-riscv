@@ -16,10 +16,12 @@ uint64 timer_scratch[NCPU][5];
 // assembly code in kernelvec.S for machine-mode timer interrupt.
 extern void timervec();
 
+extern void initVGA();
 // entry.S jumps here in machine mode on stack0.
 void
 start()
 {
+  initVGA();
   // set M Previous Privilege mode to Supervisor, for mret.
   unsigned long x = r_mstatus();
   x &= ~MSTATUS_MPP_MASK;
