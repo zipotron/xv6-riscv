@@ -4,7 +4,7 @@
 #include "riscv.h"
 #include "defs.h"
 
-#include "kernel/vga_test_kernelspace.h"
+#include "vga_test_kernelspace.h"
 
 void main();
 void timerinit();
@@ -27,7 +27,10 @@ start()
 {
   initVGA();
   VRAM=(volatile uint8 *)0x50000000;
+  //Just for testing
   c_main();
+  //end of testing
+  
   // set M Previous Privilege mode to Supervisor, for mret.
   unsigned long x = r_mstatus();
   x &= ~MSTATUS_MPP_MASK;
