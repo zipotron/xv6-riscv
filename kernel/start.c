@@ -4,8 +4,11 @@
 #include "riscv.h"
 #include "defs.h"
 
+#include "kernel/vga_test_kernelspace.h"
+
 void main();
 void timerinit();
+volatile uint8 *VRAM;
 
 // entry.S needs one stack per CPU.
 __attribute__ ((aligned (16))) char stack0[4096 * NCPU];
@@ -18,10 +21,13 @@ extern void timervec();
 
 extern void initVGA();
 // entry.S jumps here in machine mode on stack0.
+
 void
 start()
 {
   initVGA();
+  VRAM=(volatile uint8 *)0x50000000;
+  c_main();
   // set M Previous Privilege mode to Supervisor, for mret.
   unsigned long x = r_mstatus();
   x &= ~MSTATUS_MPP_MASK;
