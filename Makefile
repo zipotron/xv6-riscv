@@ -159,7 +159,7 @@ ifndef CPUS
 CPUS := 3
 endif
 
-QEMUOPTS = -serial mon:stdio -machine virt -bios none -kernel $K/kernel -m 128M -smp $(CPUS)
+QEMUOPTS = -serial mon:stdio -machine virt -device VGA -kernel $K/kernel -m 128M -smp $(CPUS)
 QEMUOPTS += -drive file=fs.img,if=none,format=raw,id=x0
 QEMUOPTS += -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
 
