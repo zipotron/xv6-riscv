@@ -2,7 +2,16 @@
 	.global initVGA
 
 initVGA:
-// PCI is at 0x30000000
+//1: j 1b
+	csrr t0, mhartid
+	li t1, 0
+	beq t0, t1, 2f
+	1:
+		wfi
+		j 1b
+	2:
+
+	// PCI is at 0x30000000
 	// VGA is at 00:01.0, using extended control regs (4096 bytes)
 	// TODO: Scan for Vendor ID / Product ID
 	la t0, 0x30000000|(1<<15)|(0<<12)
@@ -83,6 +92,11 @@ initVGA:
 		addi a0, a0, 1
 		addi t3, t3, 1
 		bltu t3, t4, 1b
+
+	// Enable floats
+	la t0, 1<<13
+	csrs mstatus, t0
+
 	ret
 
 mode_13h_regs:
