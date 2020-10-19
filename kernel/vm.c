@@ -34,7 +34,7 @@ kvmmake(void)
   kvmmap(kpgtbl, PLIC, PLIC, 0x400000, PTE_R | PTE_W);
   
   //VGA Framebuffer
-  kvmmap(kpgtbl, FRAMEBUFFERBASE, FRAMEBUFFERBASE, 0x30000000, PTE_R | PTE_W);
+  kvmmap(kpgtbl, FRAMEBUFFERBASE, FRAMEBUFFERBASE, FRAMEBUFFERSIZE, PTE_R | PTE_W);
 
   // map kernel text executable and read-only.
   kvmmap(kpgtbl, KERNBASE, KERNBASE, (uint64)etext-KERNBASE, PTE_R | PTE_X);

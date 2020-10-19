@@ -43,6 +43,7 @@
 
 //VGA Framebuffer addres
 #define FRAMEBUFFERBASE 0x50000000L
+#define FRAMEBUFFERSIZE 0x30000000L
 
 // the kernel expects there to be RAM
 // for use by the kernel and user pages
