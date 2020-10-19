@@ -8,7 +8,6 @@
 
 void main();
 void timerinit();
-volatile uint8 *VRAM;
 
 // entry.S needs one stack per CPU.
 __attribute__ ((aligned (16))) char stack0[4096 * NCPU];
@@ -26,9 +25,9 @@ void
 start()
 {
   initVGA();
-  VRAM=(volatile uint8 *)0x50000000;
+  
   //Just for testing
-  c_main();
+  c_main((volatile uint8 *)&_framebuffer);
   //end of testing
   
   // set M Previous Privilege mode to Supervisor, for mret.

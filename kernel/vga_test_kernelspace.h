@@ -1,2 +1,5 @@
+#include "types.h"
 
-void c_main(void);
+extern uint32 _framebuffer;
+
+void c_main(volatile uint8 *VRAM);

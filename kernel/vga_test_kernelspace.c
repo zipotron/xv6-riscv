@@ -1,8 +1,6 @@
-#include "kernel/vga_test_kernelspace.h"
-#include "types.h"
+#include "vga_test_kernelspace.h"
 
 typedef uint32 uint32_t;
-extern volatile uint8 *VRAM;
 
 int mandelbrot(float cr, float ci)
 {
@@ -21,7 +19,7 @@ int mandelbrot(float cr, float ci)
 	return reps;
 }
 
-void c_main(void)
+void c_main(volatile uint8 *VRAM)
 {
 	float zoom = 4.0f;
 	for (int xx=0;xx<200;xx++) {
