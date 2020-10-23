@@ -3,7 +3,6 @@ U=user
 
 OBJS = \
   $K/entry.o \
-  $K/initVGA.o \
   $K/start.o \
   $K/console.o \
   $K/printf.o \
@@ -29,13 +28,12 @@ OBJS = \
   $K/sysfile.o \
   $K/kernelvec.o \
   $K/plic.o \
-  $K/vga.o \
-  $K/vga_test_kernelspace.o \
   $K/virtio_disk.o
 
 # riscv64-unknown-elf- or riscv64-linux-gnu-
 # perhaps in /opt/riscv/bin
-TOOLPREFIX = /opt/riscv64/bin/riscv64-unknown-elf-
+# FIXME: detect GNU toolchain installation
+TOOLPREFIX = riscv-none-embed-
 
 # Try to infer the correct TOOLPREFIX if not set
 ifndef TOOLPREFIX
@@ -51,7 +49,7 @@ TOOLPREFIX := $(shell if riscv64-unknown-elf-objdump -i 2>&1 | grep 'elf64-big' 
 	echo "***" 1>&2; exit 1; fi)
 endif
 
-QEMU = qemu-system-riscv64
+QEMU = qemu-system-riscv32 -monitor telnet:127.0.0.1:55555,server,nowait
 
 CC = $(TOOLPREFIX)gcc
 AS = $(TOOLPREFIX)gas
@@ -60,6 +58,7 @@ OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
 
 CFLAGS = -Wall -Werror -O -fno-omit-frame-pointer -ggdb
+CFLAGS += -march=rv32i -mabi=ilp32
 CFLAGS += -MD
 CFLAGS += -mcmodel=medany
 CFLAGS += -ffreestanding -fno-common -nostdlib -mno-relax
@@ -76,13 +75,16 @@ endif
 
 LDFLAGS = -z max-page-size=4096
 
+# Need libgcc since no hardware support for mul/div
+LIBGCC = $(shell $(CC) --print-libgcc -march=rv32i -mabi=ilp32)
+
 $K/kernel: $(OBJS) $K/kernel.ld $U/initcode
-	$(LD) $(LDFLAGS) -T $K/kernel.ld -o $K/kernel $(OBJS) 
+	$(LD) $(LDFLAGS) -T $K/kernel.ld -o $K/kernel $(OBJS) $(LIBGCC)
 	$(OBJDUMP) -S $K/kernel > $K/kernel.asm
 	$(OBJDUMP) -t $K/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $K/kernel.sym
 
 $U/initcode: $U/initcode.S
-	$(CC) $(CFLAGS) -march=rv64g -nostdinc -I. -Ikernel -c $U/initcode.S -o $U/initcode.o
+	$(CC) $(CFLAGS) -nostdinc -I. -Ikernel -c $U/initcode.S -o $U/initcode.o
 	$(LD) $(LDFLAGS) -N -e start -Ttext 0 -o $U/initcode.out $U/initcode.o
 	$(OBJCOPY) -S -O binary $U/initcode.out $U/initcode
 	$(OBJDUMP) -S $U/initcode.o > $U/initcode.asm
@@ -93,7 +95,7 @@ tags: $(OBJS) _init
 ULIB = $U/ulib.o $U/usys.o $U/printf.o $U/umalloc.o
 
 _%: %.o $(ULIB)
-	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^ $(LIBGCC)
 	$(OBJDUMP) -S $@ > $*.asm
 	$(OBJDUMP) -t $@ | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $*.sym
 
@@ -134,7 +136,6 @@ UPROGS=\
 	$U/_usertests\
 	$U/_grind\
 	$U/_wc\
-	$U/_vga_test\
 	$U/_zombie\
 
 fs.img: mkfs/mkfs README $(UPROGS)
@@ -157,10 +158,11 @@ QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
 	then echo "-gdb tcp::$(GDBPORT)"; \
 	else echo "-s -p $(GDBPORT)"; fi)
 ifndef CPUS
-CPUS := 3
+# TODO: target for single core since currently no SMP-safe spinlock implementation
+CPUS := 1
 endif
 
-QEMUOPTS = -serial mon:stdio -machine virt -device VGA -kernel $K/kernel -m 128M -smp $(CPUS)
+QEMUOPTS = -machine virt -bios none -kernel $K/kernel -m 128M -smp $(CPUS) -nographic
 QEMUOPTS += -drive file=fs.img,if=none,format=raw,id=x0
 QEMUOPTS += -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
 

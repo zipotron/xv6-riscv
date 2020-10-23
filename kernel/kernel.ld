@@ -7,8 +7,6 @@ SECTIONS
    * ensure that entry.S / _entry is at 0x80000000,
    * where qemu's -kernel jumps.
    */
-  . = 0x50000000;
-  _framebuffer = .;
   . = 0x80000000;
 
   .text : {

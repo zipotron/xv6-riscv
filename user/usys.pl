@@ -36,4 +36,3 @@ entry("getpid");
 entry("sbrk");
 entry("sleep");
 entry("uptime");
-entry("init_graphics");
